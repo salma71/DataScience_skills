@@ -188,28 +188,29 @@ wordcloud(words = d$word, freq = d$freq, min.freq = 1,
           colors=brewer.pal(8, "Dark2"))
 ```
 
-
+### Explore frequent terms and their associations
 
 
 ```{r}
 
-#new control list
-control_list2 <- list(removePunctuation = TRUE, stopwords = TRUE, tolower = TRUE)
+findFreqTerms(dtmw, lowfreq = 4)
 
 
-dtm_original<- DocumentTermMatrix(corpus.all,control_list2) 
-
-tdm_original.40 <- removeSparseTerms( dtm_original, sparse = 0.40)
-
-
-inspect(dtm_original)
-inspect(tdm_original.40)
-
-
-findAssocs(tdm_original.40,"opec", 0.5) #get high correlation words
-findFreqTerms(dtm_original, 5)
+findAssocs(dtmw, terms = "data scientist", corlimit = 0.3)
 
 ```
+
+
+### Top 10 most frequent words in the job descriptions of the 3 job sites
+
+```{r}
+barplot(d[1:10,]$freq, las = 2, names.arg = d[1:10,]$word,
+        col ="lightblue", main ="Most frequent words",
+        ylab = "Word frequencies")
+```
+
+### Sentiment Analysis
+
 
 ```{r}
 data(stop_words)
