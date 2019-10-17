@@ -1,0 +1,138 @@
+---
+title: "Project 3b - Data Analysis and Visualizations"
+author: "Sufian"
+date: "10/16/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}
+
+# Load packages
+library(rvest)
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(xml2)
+library(httr)
+library("tm")
+library("SnowballC")
+library("wordcloud")
+library("RColorBrewer")
+library(tidytext)
+library("magrittr")
+
+
+
+```
+
+## R Markdown
+
+
+```{r}
+#read from Leticia
+ltcancel<-read.csv("https://raw.githubusercontent.com/ltcancel/Project3/master/SimplyHiredJobs.csv")
+colnames(ltcancel)<-c("Position", "Company","Location","Salary","URL","Job_Description")
+
+#read from Salma
+selshahawy<-read.csv("https://raw.githubusercontent.com/salma71/MSDS_2019/master/Fall2019/aquisition_management_607/project_3/jobs_detailsInfo.csv", stringsAsFactors = FALSE) 
+colnames(selshahawy)<-c("Position", "Company","Location","URL","Job_Description") 
+
+#read from Sufian
+ssufian<-read.csv("https://raw.githubusercontent.com/Luz917/data607project3_ssufian_monster_jobs/master/monsterjobs.csv", stringsAsFactors = FALSE) 
+colnames(ssufian)<-c("Position", "Company","Location","Salary","URL","Job_Description")  
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r }
+twocsv<-merge(ltcancel,selshahawy,all= TRUE)
+
+allcsv<-merge(twocsv,ssufian, all=TRUE)
+
+head(allcsv)
+```
+
+
+
+
+```{r}
+library("magrittr")
+# REmove Salary column
+
+clean_allcsv <- allcsv[,-c(4,6)]
+
+head(clean_allcsv)
+
+
+
+ 
+
+ 
+```
+
+
+```{r}
+
+# Removed brackets surrounding summaries
+
+clean_allcsv <- clean_allcsv %>% mutate_each(funs(tolower), Position, Company, Location, Job_Description)
+
+clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "[\r\n]" , "")
+
+head(clean_allcsv1 )
+              
+clean_allcsv2 <- clean_allcsv[,-c(4)]
+
+#add_column(clean_allcsv2 ,clean_allcsv1  )
+
+clean_allcsv2 %>% 
+  mutate(Job_Description=clean_allcsv1)
+```
+
+
+
+```{r}
+tfidf <- clean_allcsv1
+
+
+# Control list to be used for all corpuses
+control_list <- list(removePunctuation = TRUE, stopwords = TRUE, tolower = TRUE,
+                     weighting = weightTfIdf)
+
+
+
+
+
+```
+
+```{r}
+
+corpus.all <- VCorpus(VectorSource(tfidf))
+tdm.all <- TermDocumentMatrix(corpus.all, control = control_list)
+
+# Remove outliers consisting of very rare terms
+tdm.80 <- removeSparseTerms(tdm.all, sparse = 0.80)
+
+# Sum rows for total & make dataframe
+df_all <- tidy(sort(rowSums(as.matrix(tdm.80))))
+colnames(df_all) <- c("words", "count")
+
+```
+```{r}
+# Graph
+ggplot(tail(df_all, 25), aes(reorder(words, count), count)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  labs(title = "TF-IDF of 3 Job Postings",
+       x = "Words", y = "Frequency") +
+  coord_flip()
+```
+
