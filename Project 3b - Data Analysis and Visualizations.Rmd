@@ -87,52 +87,143 @@ head(clean_allcsv)
 clean_allcsv <- clean_allcsv %>% mutate_each(funs(tolower), Position, Company, Location, Job_Description)
 
 clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "[\r\n]" , "")
+clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "\\." , "")
+clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "\\*" , "")
+clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "\\+" , "")
+clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "\\\\" , "")
+clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "\\)" , "")
+clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "\\(" , "")
+clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "[[:punct:]]+", "")
+clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "[\n]" , "")
+
 
 head(clean_allcsv1 )
               
-clean_allcsv2 <- clean_allcsv[,-c(4)]
+clean_allcsv2 <- clean_allcsv[,-c(4)] # this is for sentinment later
 
-#add_column(clean_allcsv2 ,clean_allcsv1  )
 
-clean_allcsv2 %>% 
-  mutate(Job_Description=clean_allcsv1)
+clean_allcsv2$Job_Description <- clean_allcsv1 
+  
 ```
 
 
 
 ```{r}
-tfidf <- clean_allcsv1
-
+#tfidf <- clean_allcsv1
+tfidf <- clean_allcsv2$Job_Description 
 
 # Control list to be used for all corpuses
 control_list <- list(removePunctuation = TRUE, stopwords = TRUE, tolower = TRUE,
                      weighting = weightTfIdf)
 
-
-
-
-
 ```
 
 ```{r}
+# TF-IDF Based on the 3 job postings
 
 corpus.all <- VCorpus(VectorSource(tfidf))
 tdm.all <- TermDocumentMatrix(corpus.all, control = control_list)
-
+inspect(tdm.all)
 # Remove outliers consisting of very rare terms
-tdm.80 <- removeSparseTerms(tdm.all, sparse = 0.80)
-
+tdm.40 <- removeSparseTerms(tdm.all, sparse = 0.40)
+inspect(tdm.40)
 # Sum rows for total & make dataframe
-df_all <- tidy(sort(rowSums(as.matrix(tdm.80))))
+df_all <- tidy(sort(rowSums(as.matrix(tdm.40))))
 colnames(df_all) <- c("words", "count")
+View(df_all)
+
 
 ```
+
+
+
+
 ```{r}
+
+
 # Graph
 ggplot(tail(df_all, 25), aes(reorder(words, count), count)) +
   geom_bar(stat = "identity", fill = "blue") +
   labs(title = "TF-IDF of 3 Job Postings",
        x = "Words", y = "Frequency") +
   coord_flip()
+
+```
+```{r}
+docs <- Corpus(VectorSource(clean_allcsv2$Job_Description))
+toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
+docs <- tm_map(docs  , toSpace, "/")
+docs <- tm_map(docs, toSpace, "@")
+docs <- tm_map(docs, toSpace, "\\|")
+
+# Remove numbers
+docs <- tm_map(docs, removeNumbers)
+# Remove english common stopwords
+docs <- tm_map(docs, removeWords, stopwords("english"))
+# Remove punctuations
+docs <- tm_map(docs, removePunctuation)
+# Eliminate extra white spaces
+docs <- tm_map(docs, stripWhitespace)
+# Text stemming
+docs <- tm_map(docs, stemDocument)
+
+inspect(docs)
+dtmw <- TermDocumentMatrix(docs )
+m <- as.matrix(dtmw)
+v <- sort(rowSums(m),decreasing=TRUE)
+d <- data.frame(word = names(v),freq=v)
+head(d, 10)
+
+```
+
+### Generate the Word cloud
+
+The importance of key skill sets can be illustrated as a word cloud as follow :
+
+
+```{r}
+set.seed(1234)
+wordcloud(words = d$word, freq = d$freq, min.freq = 1,
+          max.words=200, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"))
+```
+
+
+
+
+```{r}
+
+#new control list
+control_list2 <- list(removePunctuation = TRUE, stopwords = TRUE, tolower = TRUE)
+
+
+dtm_original<- DocumentTermMatrix(corpus.all,control_list2) 
+
+tdm_original.40 <- removeSparseTerms( dtm_original, sparse = 0.40)
+
+
+inspect(dtm_original)
+inspect(tdm_original.40)
+
+
+findAssocs(tdm_original.40,"opec", 0.5) #get high correlation words
+findFreqTerms(dtm_original, 5)
+
+```
+
+```{r}
+data(stop_words)
+d <- tibble(text=clean_allcsv2$Job_Description )
+
+d %>% 
+  unnest_tokens(word, text)
+
+tidy_books <- d %>%
+  anti_join(stop_words)
+
+d %>% count(word, sort = TRUE)
+
+
+
 ```
 
