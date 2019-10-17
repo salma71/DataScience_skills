@@ -33,13 +33,12 @@ library("wordcloud")
 library("RColorBrewer")
 library(tidytext)
 library("magrittr")
-
+require(ggthemes)
 
 
 ```
 
-## R Markdown
-
+## Reading each teammates' job site scrapped job listings
 
 ```{r}
 #read from Leticia
@@ -57,9 +56,8 @@ colnames(ssufian)<-c("Position", "Company","Location","Salary","URL","Job_Descri
 
 ```
 
-## Including Plots
+### Merging all scrapped files into one
 
-You can also embed plots, for example:
 
 ```{r }
 twocsv<-merge(ltcancel,selshahawy,all= TRUE)
@@ -86,7 +84,7 @@ head(clean_allcsv)
 
 ```{r}
 
-# Removed brackets surrounding summaries
+# Removed brackets & general cleanup of job summaries
 
 clean_allcsv <- clean_allcsv %>% mutate_each(funs(tolower), Position, Company, Location, Job_Description)
 
@@ -129,10 +127,10 @@ corpus.all <- VCorpus(VectorSource(tfidf))
 tdm.all <- TermDocumentMatrix(corpus.all, control = control_list)
 inspect(tdm.all)
 # Remove outliers consisting of very rare terms
-tdm.40 <- removeSparseTerms(tdm.all, sparse = 0.40)
+tdm.60 <- removeSparseTerms(tdm.all, sparse = 0.60)
 inspect(tdm.40)
 # Sum rows for total & make dataframe
-df_all <- tidy(sort(rowSums(as.matrix(tdm.40))))
+df_all <- tidy(sort(rowSums(as.matrix(tdm.60))))
 colnames(df_all) <- c("words", "count")
 View(df_all)
 
@@ -169,7 +167,7 @@ docs <- tm_map(docs, removePunctuation)
 # Eliminate extra white spaces
 docs <- tm_map(docs, stripWhitespace)
 # Text stemming
-docs <- tm_map(docs, stemDocument)
+#docs <- tm_map(docs, stemDocument)
 
 inspect(docs)
 dtmw <- TermDocumentMatrix(docs )
@@ -179,11 +177,11 @@ d <- data.frame(word = names(v),freq=v)
 head(d, 10)
 
 # this is for testing purpose only for now - could be deleted later
-m2 <- as.data.frame(t(m))
-m_wide <- bind_cols(clean_allcsv2, m2)
-m_long <- m_wide %>%
-  gather("word", "count", -Position:-Job_Description)
-View(head(m_long, 1000))
+#m2 <- as.data.frame(t(m))
+#m_wide <- bind_cols(clean_allcsv2, m2)
+#m_long <- m_wide %>%
+#  gather("word", "count", -Position:-Job_Description)
+#View(head(m_long, 1000))
 
 
 ```
@@ -218,7 +216,7 @@ findAssocs(dtmw, terms = "data scientist", corlimit = 0.3)
 ```{r}
 barplot(d[1:10,]$freq, las = 2, names.arg = d[1:10,]$word,
         col ="lightblue", main ="Most frequent words",
-        ylab = "Word frequencies")
+        ylab = "Word  frequencies")
 ```
 ```{r}
 
@@ -259,6 +257,8 @@ select(Position, Company, R, python, SQL, hadoop, perl, matplotlib, Cplusplus, V
 
 ```
 
+### Setup tool skills for plotting
+
 ```{r}
 toolskills2 <- toolskills %>% select(-(1:2)) %>% summarise_all(sum) %>% gather(variable,value) %>% arrange(desc(value))
 ```
@@ -269,9 +269,110 @@ toolskills2 <- toolskills %>% select(-(1:2)) %>% summarise_all(sum) %>% gather(v
 ggplot(toolskills2,aes(x=reorder(variable, value), y=value)) + geom_bar(stat='identity',fill="green") + xlab('') + ylab('Frequency') + labs(title='Tool Skills') + coord_flip() + theme_minimal()
 ```
 
+### Frequency of Hard skills
+
+```{r}
+
+
+hardskills <- clean_allcsv2 %>%
+    mutate(machinelearning = grepl("machine learning", Job_Description, ignore.case=TRUE)) %>%
+    mutate(modeling = grepl("model", Job_Description, ignore.case=TRUE)) %>%
+    mutate(statistics = grepl("statistics", Job_Description, ignore.case=TRUE)) %>%
+    mutate(programming = grepl("programming", Job_Description, ignore.case=TRUE)) %>%
+    mutate(quantitative = grepl("quantitative", Job_Description, ignore.case=TRUE)) %>%
+    mutate(debugging = grepl("debugging", Job_Description, ignore.case=TRUE)) %>%
+    mutate(statistical = grepl("statistical",  Job_Description, ignore.case=TRUE)) %>%
+    mutate(regression = grepl("regression",  Job_Description, ignore.case=TRUE)) %>%
+
+  
+select(Position, Company, machinelearning, modeling, statistics, programming, quantitative, debugging, statistical, regression)
+
+
+```
+
+### Setup hard skills for plotting
+
+```{r}
+
+hardskills2 <- hardskills %>% 
+               select(-(1:2)) %>% 
+               summarise_all(sum) %>% 
+               gather(variable,value) %>% 
+               arrange(desc(value))
+```
+
+### Visualized the most in-demand hard sKills:
+
+```{r}
+ggplot(hardskills2,aes(x=reorder(variable, value), y=value)) + 
+  geom_bar(stat='identity',fill="yellow") + 
+  xlab('') + 
+  ylab('Frequency') + 
+  labs(title='Hard Skills') + 
+  coord_flip() + 
+  theme_minimal()
+
+```
+
+### Frequency of Soft skills
+
+```{r}
+
+softskills <- clean_allcsv2 %>%
+    mutate(workingremote = grepl("working remote", Job_Description, ignore.case=TRUE)) %>% 
+    mutate(communication = grepl("communication", Job_Description, ignore.case=TRUE)) %>%
+    mutate(collaborative = grepl("collaborate", Job_Description, ignore.case=TRUE)) %>%
+    mutate(creative = grepl("creative", Job_Description, ignore.case=TRUE)) %>%
+    mutate(critical = grepl("critical", Job_Description, ignore.case=TRUE)) %>%
+    mutate(problemsolving = grepl("problem solving", Job_Description, ignore.case=TRUE)) %>%
+    mutate(activelearning = grepl("active learning", Job_Description, ignore.case=TRUE)) %>%
+    mutate(hypothesis = grepl("hypothesis", Job_Description, ignore.case=TRUE)) %>%
+    mutate(organized = grepl("organize", Job_Description, ignore.case=TRUE)) %>%
+    mutate(judgement = grepl("judgement", Job_Description, ignore.case=TRUE)) %>%
+    mutate(selfstarter = grepl("self Starter", Job_Description, ignore.case=TRUE)) %>%
+    mutate(interpersonalskills = grepl("interpersonal skills", Job_Description, ignore.case=TRUE)) %>%
+    mutate(detail = grepl("attention to detail", Job_Description, ignore.case=TRUE)) %>%
+    mutate(visualization = grepl("visualization", Job_Description, ignore.case=TRUE)) %>%
+    mutate(leadership = grepl("leadership", Job_Description, ignore.case=TRUE)) %>%
+    mutate(presentation = grepl("presentation", Job_Description, ignore.case=TRUE)) %>%
+      mutate(passion = grepl("passion", Job_Description, ignore.case=TRUE)) %>%
+      mutate(research = grepl("research", Job_Description, ignore.case=TRUE)) %>%
+      mutate(teamwork = grepl("teamwork", Job_Description, ignore.case=TRUE)) %>%
+      mutate(integrity = grepl("integrity", Job_Description, ignore.case=TRUE)) %>%
+   mutate(passionate= grepl("passionate", Job_Description, ignore.case=TRUE)) %>%
+
+select(Position, Company, workingremote, communication, collaborative, creative, critical, problemsolving, 
+  activelearning, hypothesis, organized, judgement, selfstarter, interpersonalskills, detail, 
+  visualization, leadership,presentation,passion,research,teamwork,integrity,passionate)
+
+```
+
+
+
+### Setup Soft skills for plotting
+
+
+```{r}
+
+softskills2 <- softskills %>% 
+               select(-(1:2)) %>% 
+               summarise_all(sum) %>% 
+               gather(variable,value) %>% 
+               arrange(desc(value))
+
+```
+
+### Visualized the most in-demand soft sKills:
+
+```{r}
+
+ggplot(softskills2,aes(x=reorder(variable, value), y=value)) + geom_bar(stat='identity',fill="orange") + xlab('') + ylab('Frequency') + labs(title='Soft Skills') + coord_flip() + theme_minimal()
+
+```
+
 ### Sentiment Analysis using sentimentr package
 
-- sentiment of sentence of the job description
+- sentiment of sentence within each line of job descriptions
 
 
 ```{r}
@@ -280,18 +381,24 @@ ggplot(toolskills2,aes(x=reorder(variable, value), y=value)) + geom_bar(stat='id
 install.packages('sentimentr')
 library('sentimentr')
 
-scores <- sentiment_by(m_wide$Job_Description, by=NULL) %>%
+scores1 <- sentiment_by(clean_allcsv2$Job_Description, by=NULL) %>%
   pull(ave_sentiment)
-head(scores)
+head(scores1)
 
-m_wide2 <- m_wide
-m_wide2$sentiment <- scores
-head(m_wide2 %>% select(Job_Description, sentiment))
+#m_wide2 <- m_wide
+clean_allcsv2$sentiment_scores<- scores1
+clean_allcsv3 <- clean_allcsv2[,-c(4)] # deleting redundant column
+m_wide2 <- clean_allcsv3  %>% 
+       select(Company, sentiment_scores)
 
 
 ```
-```{r}
 
+
+```
+
+
+```{r}
 scores1 <- sentiment_by(clean_allcsv2$Job_Description, by=NULL) %>%
   pull(ave_sentiment)
 head(scores1)
@@ -302,9 +409,6 @@ clean_allcsv3 <- clean_allcsv2[,-c(4)] # deleting redundant column
 head(m_wide2 %>% clean_allcsv2$scores %>% 
        
        select(Company, sentiment_scores))
-
-
-
 
 ```
 
