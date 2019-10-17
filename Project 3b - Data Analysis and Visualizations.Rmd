@@ -178,6 +178,14 @@ v <- sort(rowSums(m),decreasing=TRUE)
 d <- data.frame(word = names(v),freq=v)
 head(d, 10)
 
+# this is for testing purpose only for now - could be deleted later
+m2 <- as.data.frame(t(m))
+m_wide <- bind_cols(clean_allcsv2, m2)
+m_long <- m_wide %>%
+  gather("word", "count", -Position:-Job_Description)
+View(head(m_long, 1000))
+
+
 ```
 
 ### Generate the Word cloud
@@ -214,18 +222,11 @@ barplot(d[1:10,]$freq, las = 2, names.arg = d[1:10,]$word,
 ```
 ```{r}
 
-# For display purpose, we also need the \\b removed from the keyword set
-KEYWORDS_DISPLAY <- c('Hadoop','Python','SQL', 'NoSQL','R', 'Spark', 'SAS', 'Excel', 'AWS', 'Azure', 'Java', 'Tableau')
-
-# Create running total dataframe
-running <- data.frame(skill = KEYWORDS_DISPLAY, count = rep(0, length(KEYWORDS_DISPLAY)))
-
 
 
 ```
 
-### Sentiment Analysis
-
+### Frequency of Technical skills
 
 ```{r}
 
@@ -266,5 +267,44 @@ toolskills2 <- toolskills %>% select(-(1:2)) %>% summarise_all(sum) %>% gather(v
 
 ```{r}
 ggplot(toolskills2,aes(x=reorder(variable, value), y=value)) + geom_bar(stat='identity',fill="green") + xlab('') + ylab('Frequency') + labs(title='Tool Skills') + coord_flip() + theme_minimal()
+```
+
+### Sentiment Analysis using sentimentr package
+
+- sentiment of sentence of the job description
+
+
+```{r}
+
+
+install.packages('sentimentr')
+library('sentimentr')
+
+scores <- sentiment_by(m_wide$Job_Description, by=NULL) %>%
+  pull(ave_sentiment)
+head(scores)
+
+m_wide2 <- m_wide
+m_wide2$sentiment <- scores
+head(m_wide2 %>% select(Job_Description, sentiment))
+
+
+```
+```{r}
+
+scores1 <- sentiment_by(clean_allcsv2$Job_Description, by=NULL) %>%
+  pull(ave_sentiment)
+head(scores1)
+
+#m_wide2 <- m_wide
+clean_allcsv2$sentiment_scores<- scores1
+clean_allcsv3 <- clean_allcsv2[,-c(4)] # deleting redundant column
+head(m_wide2 %>% clean_allcsv2$scores %>% 
+       
+       select(Company, sentiment_scores))
+
+
+
+
 ```
 
