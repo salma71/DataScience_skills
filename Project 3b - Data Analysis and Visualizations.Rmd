@@ -5,6 +5,14 @@ date: "10/16/2019"
 output: html_document
 ---
 
+
+
+Rpub links:
+
+http://rpubs.com/ssufian/540285
+
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -73,10 +81,6 @@ clean_allcsv <- allcsv[,-c(4,6)]
 head(clean_allcsv)
 
 
-
- 
-
- 
 ```
 
 
@@ -178,7 +182,7 @@ head(d, 10)
 
 ### Generate the Word cloud
 
-The importance of key skill sets can be illustrated as a word cloud as follow :
+The important key skill sets can be illustrated as a word cloud as follow :
 
 
 ```{r}
@@ -208,23 +212,59 @@ barplot(d[1:10,]$freq, las = 2, names.arg = d[1:10,]$word,
         col ="lightblue", main ="Most frequent words",
         ylab = "Word frequencies")
 ```
+```{r}
+
+# For display purpose, we also need the \\b removed from the keyword set
+KEYWORDS_DISPLAY <- c('Hadoop','Python','SQL', 'NoSQL','R', 'Spark', 'SAS', 'Excel', 'AWS', 'Azure', 'Java', 'Tableau')
+
+# Create running total dataframe
+running <- data.frame(skill = KEYWORDS_DISPLAY, count = rep(0, length(KEYWORDS_DISPLAY)))
+
+
+
+```
 
 ### Sentiment Analysis
 
 
 ```{r}
-data(stop_words)
-d <- tibble(text=clean_allcsv2$Job_Description )
 
-d %>% 
-  unnest_tokens(word, text)
+toolskills <- clean_allcsv2 %>%
+    mutate(R = grepl("\\bR\\b,", Job_Description, ignore.case=TRUE)) %>%
+    mutate(python = grepl("Python", Job_Description, ignore.case=TRUE)) %>%
+    mutate(SQL = grepl("SQL", Job_Description, ignore.case=TRUE)) %>%
+    mutate(hadoop = grepl("hadoop", Job_Description, ignore.case=TRUE)) %>%
+    mutate(perl = grepl("perl", Job_Description, ignore.case=TRUE)) %>%
+    mutate(matplotlib = grepl("matplotlib", Job_Description, ignore.case=TRUE)) %>%
+    mutate(Cplusplus = grepl("C++", Job_Description, fixed=TRUE)) %>%
+    mutate(VB = grepl("VB", Job_Description, ignore.case=TRUE)) %>%
+    mutate(java = grepl("java\\b", Job_Description, ignore.case=TRUE)) %>%
+    mutate(scala = grepl("scala", Job_Description, ignore.case=TRUE)) %>%
+    mutate(tensorflow = grepl("tensorflow",Job_Description, ignore.case=TRUE)) %>%
+    mutate(javascript = grepl("javascript", Job_Description, ignore.case=TRUE)) %>%
+    mutate(spark = grepl("spark", Job_Description, ignore.case=TRUE)) %>%
+   # mutate(spark = grepl("Hadoop", Job_Description, ignore.case=TRUE)) %>%  
+    # mutate(spark = grepl("nosql", Job_Description, ignore.case=TRUE)) %>%  
+     # mutate(spark = grepl("spark", Job_Description, ignore.case=TRUE)) %>%  
+     # mutate(spark = grepl("sas", Job_Description, ignore.case=TRUE)) %>%  
+     # mutate(spark = grepl("excel", Job_Description, ignore.case=TRUE)) %>%  
+     # mutate(spark = grepl("aws", Job_Description, ignore.case=TRUE)) %>%  
+      #mutate(spark = grepl("azure", Job_Description, ignore.case=TRUE)) %>%  
+      mutate(spark = grepl("java", Job_Description, ignore.case=TRUE)) %>%   
+      #mutate(spark = grepl("tableau", Job_Description, ignore.case=TRUE)) %>% 
+  
+  
+select(Position, Company, R, python, SQL, hadoop, perl, matplotlib, Cplusplus, VB, java, scala, tensorflow, javascript,spark,java)
 
-tidy_books <- d %>%
-  anti_join(stop_words)
+```
 
-d %>% count(word, sort = TRUE)
+```{r}
+toolskills2 <- toolskills %>% select(-(1:2)) %>% summarise_all(sum) %>% gather(variable,value) %>% arrange(desc(value))
+```
 
+### Visualized the most in-demand tool sKills:
 
-
+```{r}
+ggplot(toolskills2,aes(x=reorder(variable, value), y=value)) + geom_bar(stat='identity',fill="green") + xlab('') + ylab('Frequency') + labs(title='Tool Skills') + coord_flip() + theme_minimal()
 ```
 
