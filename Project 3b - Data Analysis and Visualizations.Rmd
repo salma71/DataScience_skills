@@ -1,4 +1,3 @@
-
 title: "Project 3b - Data Analysis and Visualizations"
 
 author: "Sufian"
@@ -26,7 +25,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r message=FALSE, warning=FALSE}
-
 # Load packages
 library(rvest)
 library(stringr)
@@ -43,7 +41,6 @@ library(tidytext)
 library("magrittr")
 require(ggthemes)
 library('sentimentr')
-
 ```
 
 ## Reading each teammates' job site scrapped job listings
@@ -52,16 +49,12 @@ library('sentimentr')
 #read from Leticia
 ltcancel<-read.csv("https://raw.githubusercontent.com/ltcancel/Project3/master/SimplyHiredJobs.csv")
 colnames(ltcancel)<-c("Position", "Company","Location","Salary","URL","Job_Description")
-
 #read from Salma
 selshahawy<-read.csv("https://raw.githubusercontent.com/salma71/MSDS_2019/master/Fall2019/aquisition_management_607/project_3/jobs_detailsInfo.csv", stringsAsFactors = FALSE) 
 colnames(selshahawy)<-c("Position", "Company","Location","URL","Job_Description") 
-
 #read from Sufian
 ssufian<-read.csv("https://raw.githubusercontent.com/Luz917/data607project3_ssufian_monster_jobs/master/monsterjobs.csv", stringsAsFactors = FALSE) 
 colnames(ssufian)<-c("Position", "Company","Location","Salary","URL","Job_Description")  
-
-
 ```
 
 ### Merging all scrapped files into one
@@ -69,9 +62,7 @@ colnames(ssufian)<-c("Position", "Company","Location","Salary","URL","Job_Descri
 
 ```{r }
 twocsv<-merge(ltcancel,selshahawy,all= TRUE)
-
 allcsv<-merge(twocsv,ssufian, all=TRUE)
-
 ```
 
 ### Deleting unnecessary columns
@@ -79,126 +70,87 @@ allcsv<-merge(twocsv,ssufian, all=TRUE)
 ```{r}
 library("magrittr")
 # REmove Salary column
-
 clean_allcsv <- allcsv[,-c(4,6)]
-
 ```
 
 ### Data cleaning using REGEX
-
-```{r}
-
-# Removed brackets & general cleanup of job summaries
-
-clean_allcsv <- clean_allcsv %>% mutate_each(funs(tolower), Position, Company, Location, Job_Description)
-
-clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "[\r\n]" , "")
-clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "\\." , "")
-clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "\\*" , "")
-clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "\\+" , "")
-clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "\\\\" , "")
-clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "\\)" , "")
-clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "\\(" , "")
-clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "[[:punct:]]+", "")
-clean_allcsv1 <- str_replace_all(clean_allcsv$Job_Description, "[\n]" , "")
-
-
-#head(clean_allcsv1 )
-              
-clean_allcsv2 <- clean_allcsv[,-c(4)] # this is for sentinment later
-
-
-clean_allcsv2$Job_Description <- clean_allcsv1 
-
-clean_allcsv2$Job_Description[0] #checking only
-  
-```
-
-### Creating a control list to be passed into Term Document Matrix (using TfIDF weightings)
 
 
 ```{r}
 #tfidf <- clean_allcsv1
 tfidf <- clean_allcsv2$Job_Description 
-
 # Control list to be used for all corpuses
 control_list <- list(removePunctuation = TRUE, stopwords = TRUE, tolower = TRUE,
                      weighting = weightTfIdf)
-
 ```
 
 ```{r}
 # TF-IDF Based on the 3 job postings
+corpus.all <- VCorpus(VectorSource(tfidf$Job_Description))
+dtm.all <- DocumentTermMatrix(corpus.all, control = control_list)
+dtm.all
+```
 
-corpus.all <- VCorpus(VectorSource(tfidf))
+```{r}
 tdm.all <- TermDocumentMatrix(corpus.all, control = control_list)
-#inspect(tdm.all)
-# Remove outliers consisting of very rare terms
-tdm.60 <- removeSparseTerms(tdm.all, sparse = 0.60)
-#inspect(tdm.60)
-# Sum rows for total & make dataframe
-df_all <- tidy(sort(rowSums(as.matrix(tdm.60))))
-colnames(df_all) <- c("words", "count")
-#View(df_all)
-
+inspect(tdm.all)
 ```
 
 
 
+```{r}
+# Remove outliers consisting of very rare terms - infrequent words outlairs
+tdms.60 <- removeSparseTerms(tdm.all, sparse = 0.60)
+inspect(tdms.60)
+```
 
 ```{r}
+# explore the data
+# The data reduction techniques used singular value decomposition reduces the number of columns (documents) but keeps the number of rows (words).
+count <- rowSums(as.matrix(tdms.60))
 
+count <- sort(rowSums(as.matrix(tdms.60)), decreasing=TRUE)   
+head(count, 14)
+```
+
+```{r}
+df_all <- data.frame(words=names(count), count=count)   
+head(df_all)
+```
+
+
+```{r}
 # Graph of TF-IDF in the 3 job postings
-ggplot(tail(df_all, 25), aes(reorder(words, count), count)) +
+ggplot(head(df_all,25), aes(reorder(words, count), count)) +  # head because I desc the order 
   geom_bar(stat = "identity", fill = "blue") +
-  labs(title = "TF-IDF of 3 Job Sites: ai-job.net, SimplyhiredJobs.com, Monster.com",
+  labs(title = "TF-IDF analysis based on TermDocumentMatrix",
+       subtitle = "Analysis based on three job postings sites",
        x = "Words", y = "Frequency") +
   coord_flip()
-
 ```
 
 ### Text Mining and Word Cloud by building a term-document matrix
 
 
 ```{r}
-
-docs <- Corpus(VectorSource(clean_allcsv2$Job_Description))
-toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
-docs <- tm_map(docs  , toSpace, "/")
-docs <- tm_map(docs, toSpace, "@")
-docs <- tm_map(docs, toSpace, "\\|")
-
-# Remove numbers
-docs <- tm_map(docs, removeNumbers)
-# Remove english common stopwords
-docs <- tm_map(docs, removeWords, stopwords("english"))
-# Remove punctuations
-docs <- tm_map(docs, removePunctuation)
-# Eliminate extra white spaces
-docs <- tm_map(docs, stripWhitespace)
-# Text stemming
-#docs <- tm_map(docs, stemDocument)
-
-dtmw <- TermDocumentMatrix(docs )
-m <- as.matrix(dtmw)
-v <- sort(rowSums(m),decreasing=TRUE)
-d <- data.frame(word = names(v),freq=v)
-#head(d, 10)
-
+word_cloud <- tm_map(corpus.all, removeWords, c("services", "data", "andor", "ability", "using", "new", "science", "scientist" , "you", "must", "will", "including", "can", stopwords('english')))
 
 ```
+
+```{r}
+wordcloud(names(count), 
+          count,
+          max.words = 80, 
+          random.order = FALSE, 
+          scale=c(2.5,.4),
+          random.color = FALSE,
+          colors=palette())
+```
+
 
 ### Generate the Word cloud
 
 The important key skill sets can be illustrated in a word cloud as follow :
-
-
-```{r}
-set.seed(1234)
-wordcloud(words = d$word, freq = d$freq, min.freq = 1,
-          max.words=200, random.order=FALSE, rot.per=0.35, 
-          colors=brewer.pal(8, "Dark2"))
-```
 
 --------------------------------------------------------------------------------
 
@@ -210,20 +162,11 @@ wordcloud(words = d$word, freq = d$freq, min.freq = 1,
 
 \clearpage
 
-### Top 10 most frequent words in the job descriptions of the 3 job sites
-
-
-```{r}
-barplot(d[1:10,]$freq, las = 2, names.arg = d[1:10,]$word,
-        col ="lightblue", main ="Most frequent words in Data Scientist Job Boards",
-        ylab = "Word  frequencies")
-```
 
 ### Frequency of Technical skills
 
 ```{r}
-
-toolskills <- clean_allcsv2 %>%
+toolskills <- clean_allcsv %>%
     mutate(R = grepl("\\bR\\b,", Job_Description, ignore.case=TRUE)) %>%
     mutate(python = grepl("Python", Job_Description, ignore.case=TRUE)) %>%
     mutate(SQL = grepl("SQL", Job_Description, ignore.case=TRUE)) %>%
@@ -237,19 +180,24 @@ toolskills <- clean_allcsv2 %>%
     mutate(tensorflow = grepl("tensorflow",Job_Description, ignore.case=TRUE)) %>%
     mutate(javascript = grepl("javascript", Job_Description, ignore.case=TRUE)) %>%
     mutate(spark = grepl("spark", Job_Description, ignore.case=TRUE)) %>%
-   # mutate(spark = grepl("Hadoop", Job_Description, ignore.case=TRUE)) %>%  
-    # mutate(spark = grepl("nosql", Job_Description, ignore.case=TRUE)) %>%  
-     # mutate(spark = grepl("spark", Job_Description, ignore.case=TRUE)) %>%  
-     # mutate(spark = grepl("sas", Job_Description, ignore.case=TRUE)) %>%  
-     # mutate(spark = grepl("excel", Job_Description, ignore.case=TRUE)) %>%  
-     # mutate(spark = grepl("aws", Job_Description, ignore.case=TRUE)) %>%  
-      #mutate(spark = grepl("azure", Job_Description, ignore.case=TRUE)) %>%  
-      mutate(spark = grepl("java", Job_Description, ignore.case=TRUE)) %>%   
-      #mutate(spark = grepl("tableau", Job_Description, ignore.case=TRUE)) %>% 
-  
-  
-select(Position, Company, R, python, SQL, hadoop, perl, matplotlib, Cplusplus, VB, java, scala, tensorflow, javascript,spark,java)
-
+    mutate(java = grepl("java", Job_Description, ignore.case=TRUE)) %>%
+    select(
+      Position, 
+      Company, 
+      R, 
+      python, 
+      SQL, 
+      hadoop, 
+      perl, 
+      matplotlib, 
+      Cplusplus, 
+      VB, 
+      java, 
+      scala, 
+      tensorflow, 
+      javascript,
+      spark,
+      java)
 ```
 
 ### Setup tool skills for plotting
@@ -267,9 +215,7 @@ ggplot(toolskills2,aes(x=reorder(variable, value), y=value)) + geom_bar(stat='id
 ### Frequency of Hard skills
 
 ```{r}
-
-
-hardskills <- clean_allcsv2 %>%
+hardskills <- clean_allcsv %>%
     mutate(machinelearning = grepl("machine learning", Job_Description, ignore.case=TRUE)) %>%
     mutate(modeling = grepl("model", Job_Description, ignore.case=TRUE)) %>%
     mutate(statistics = grepl("statistics", Job_Description, ignore.case=TRUE)) %>%
@@ -278,17 +224,13 @@ hardskills <- clean_allcsv2 %>%
     mutate(debugging = grepl("debugging", Job_Description, ignore.case=TRUE)) %>%
     mutate(statistical = grepl("statistical",  Job_Description, ignore.case=TRUE)) %>%
     mutate(regression = grepl("regression",  Job_Description, ignore.case=TRUE)) %>%
-
   
 select(Position, Company, machinelearning, modeling, statistics, programming, quantitative, debugging, statistical, regression)
-
-
 ```
 
 ### Setup hard skills for plotting
 
 ```{r}
-
 hardskills2 <- hardskills %>% 
                select(-(1:2)) %>% 
                summarise_all(sum) %>% 
@@ -306,14 +248,12 @@ ggplot(hardskills2,aes(x=reorder(variable, value), y=value)) +
   labs(title='Hard Skills') + 
   coord_flip() + 
   theme_minimal()
-
 ```
 
 ### Frequency of Soft skills
 
 ```{r}
-
-softskills <- clean_allcsv2 %>%
+softskills <- clean_allcsv %>%
     mutate(workingremote = grepl("working remote", Job_Description, ignore.case=TRUE)) %>% 
     mutate(communication = grepl("communication", Job_Description, ignore.case=TRUE)) %>%
     mutate(collaborative = grepl("collaborate", Job_Description, ignore.case=TRUE)) %>%
@@ -335,11 +275,9 @@ softskills <- clean_allcsv2 %>%
       mutate(teamwork = grepl("teamwork", Job_Description, ignore.case=TRUE)) %>%
       mutate(integrity = grepl("integrity", Job_Description, ignore.case=TRUE)) %>%
    mutate(passionate= grepl("passionate", Job_Description, ignore.case=TRUE)) %>%
-
 select(Position, Company, workingremote, communication, collaborative, creative, critical, problemsolving, 
   activelearning, hypothesis, organized, judgement, selfstarter, interpersonalskills, detail_oriented, 
   visualization, leadership,presentation,passion,research,teamwork,integrity,passionate)
-
 ```
 
 
@@ -348,21 +286,17 @@ select(Position, Company, workingremote, communication, collaborative, creative,
 
 
 ```{r}
-
 softskills2 <- softskills %>% 
                select(-(1:2)) %>% 
                summarise_all(sum) %>% 
                gather(variable,value) %>% 
                arrange(desc(value))
-
 ```
 
 ### Visualized the most in-demand soft sKills:
 
 ```{r}
-
 ggplot(softskills2,aes(x=reorder(variable, value), y=value)) + geom_bar(stat='identity',fill="orange",color="blue") + xlab('') + ylab('Frequency') + labs(title='Soft Skills') + coord_flip() + theme_minimal()
-
 ```
 
 ### Sentiment Analysis using sentimentr package
@@ -371,20 +305,15 @@ ggplot(softskills2,aes(x=reorder(variable, value), y=value)) + geom_bar(stat='id
 
 
 ```{r}
-
-
-
-scores1 <- sentiment_by(clean_allcsv2$Job_Description, by=NULL) %>%
+scores1 <- sentiment_by(clean_allcsv$Job_Description, by=NULL) %>%
   pull(ave_sentiment)
 head(scores1)
-
 #m_wide2 <- m_wide
-clean_allcsv2$sentiment_scores<- scores1
-clean_allcsv3 <- clean_allcsv2[,-c(4)] # deleting redundant column
-m_wide2 <- clean_allcsv3  %>% 
+#clean_allcsv2$sentiment_scores<- scores1
+#clean_allcsv3 <- clean_allcsv2[,-c(4)] # deleting redundant column
+sentiment_score_df <- clean_allcsv2  %>% 
        select(Company, sentiment_scores)
-head(m_wide2)
-
+head(sentiment_score_df)
 ```
 
 
@@ -394,38 +323,38 @@ head(m_wide2)
 ```{r}
 # Take a sample of 10 job listings of individual companies (top 10 vs. bottom 10 sentiment scores):
 # First top 10 job listings 
-df_top <- m_wide2 %>% 
+df_top <- sentiment_score_df %>% 
   top_n(10)
-
 # Bottom 10 job listings
-df_bottom <- m_wide2 %>% 
+df_bottom <- sentiment_score_df %>% 
   top_n(-10)
 
 df_total <- left_join(df_top,df_bottom,by="Company")
-
- df_total1 <- df_total[,-c(3)] 
-  
-  
-#Bar charts  to show 10 highest (Most Positive) sentiments Companies
-
-ptop <- ggplot(df_top , aes(x=Company,y=sentiment_scores,fill=Company))+geom_bar(color="black",stat="identity")+
-  ggtitle("Top 10 Positive Sentiment Scores of Job Listings by Companies")+
-    theme_excel()
-ptop <- ptop + theme(axis.text = element_text(size = 10,angle =90, hjust = 1))+
-     theme(legend.position="bottom")
-
-ptop
-
-#10 lowest (Least Positive) of Job Listings by Companies
-pbot <- ggplot(df_bottom , aes(x=Company,y=sentiment_scores,fill=Company))+geom_bar(color="black",stat="identity")+
-  ggtitle("Bottom 10 Lowest Sentiment Scores of Job Listings by Companies")+
-    theme_excel()
-pbot <- pbot+ theme(axis.text = element_text(size = 10,angle =90, hjust = 1))+
-     theme(legend.position="bottom")
-
-pbot
+df_total[,-c(3)] # deleting the extra column
 
 ```
+  
+```{r}
+  
+#Bar charts  to show 10 highest (Most Positive) sentiments Companies
+top_sent <- ggplot(df_top , aes(x=Company,y=sentiment_scores,fill=Company)) + 
+  geom_bar(color="black",stat="identity") +
+  ggtitle("Top 10 Positive Sentiment Scores of Job Listings by Companies") +
+  theme_excel() + 
+  theme(axis.text = element_text(size = 10,angle =90, hjust = 1)) + 
+  theme(legend.position="bottom")
 
+top_sent
+```
 
+```{r}
+#10 lowest (Least Positive) of Job Listings by Companies
+lest_sent <- ggplot(df_bottom ,aes(x=Company,y=sentiment_scores,fill=Company)) + 
+  geom_bar(color="black",stat="identity") + 
+  ggtitle("Bottom 10 Lowest Sentiment Scores of Job Listings by Companies") +
+  theme_excel() + 
+  theme(axis.text = element_text(size = 10,angle =90, hjust = 1)) + 
+  theme(legend.position="bottom")
 
+lest_sent
+```
