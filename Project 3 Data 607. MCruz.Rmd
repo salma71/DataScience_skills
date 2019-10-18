@@ -78,6 +78,12 @@ allcsv<-merge(twocsv,ssufian, all=TRUE)
 str(allcsv)
 ```
 
+Remove columns to make it easier to run. 
+
+```{r}
+allcsv2 <-allcsv[c(1,2,5)]
+```
+
 
 ## Prepare the csv for text analysis.
 
@@ -192,7 +198,7 @@ Pairing of the words
 tidy_word_pairs<-tidywords%>%
   pairwise_count(term,count, sort= TRUE)
 
-kable(tidy_word_pairs) %>%
+kable(tidy_word_pairs [1:20, 1:3]) %>%
   kable_styling(full_width = F) %>%
   column_spec(1, bold = T, border_right = F) %>%
   column_spec(2, bold = T, border_right = F)%>%
@@ -287,3 +293,7 @@ https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_ht
 
 4.R Reduce Applys
 https://blog.zhaw.ch/datascience/r-reduce-applys-lesser-known-brother/
+
+RPubs Link
+http://rpubs.com/Luz917/project3data607Cruz
+
