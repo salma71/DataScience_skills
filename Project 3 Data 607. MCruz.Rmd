@@ -1,0 +1,296 @@
+---
+title: "Project 3 607"
+author: "Maryluz Cruz"
+date: "10/13/2019"
+output: html_document
+---
+
+## Text Analysis of Simplyhired, ai-job.net, and Monster
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+After all of the Data has been scraped from the Job websites and turned into .csv's, next we have to read in the .csv file and merge them together and then prepare them for text analysis. 
+
+
+#Load packages
+
+```{r}
+require(dplyr)
+require(rvest)
+require(stringr)
+require(tm)
+require(SnowballC)
+require(tidytext)
+require(stringr)
+require(textdata)
+require(tidyverse)
+require(ggplot2)
+require(wordcloud)
+require(widyr)
+require(igraph)
+require(ggraph)
+require(kableExtra)
+```
+
+
+Since all the comlumn names were different the column names were changed so that they all can be the same when we merge the three databases different databases. 
+
+##Read in .csv of SimplyHired
+
+```{r}
+ltcancel<-read.csv("https://raw.githubusercontent.com/ltcancel/Project3/master/SimplyHiredJobs.csv", stringsAsFactors = FALSE)
+colnames(ltcancel)<-c("Position", "Company","Location","Salary","URL","Job_Description")
+str(ltcancel)
+```
+
+## Read in .csv of ai-job.net
+
+```{r}
+selshahawy<-read.csv("https://raw.githubusercontent.com/salma71/MSDS_2019/master/Fall2019/aquisition_management_607/project_3/jobs_detailsInfo.csv", stringsAsFactors = FALSE) 
+colnames(selshahawy)<-c("Position", "Company","Location","URL","Job_Description")  
+str(selshahawy)
+```
+
+## Read in .csv of Monster 
+
+```{r}
+ssufian<-read.csv("https://raw.githubusercontent.com/salma71/DataScience_skills/master/monsterjobs.csv", stringsAsFactors = FALSE) 
+colnames(ssufian)<-c("Position", "Company","Location","Salary","URL","Job_Description")  
+str(ssufian)
+```
+
+## Merge all the .csv's into one. 
+
+Since we only can merge two at at time, we merge the first two .csvs into one. 
+All the column names and rows are not identical so we have to set all = TRUE to make sure that they all merge no matter the number of columns or the number of rows. 
+
+```{r}
+twocsv<-merge(ltcancel,selshahawy,all= TRUE)
+str(twocsv)
+```
+
+Here we merge the third .csv and all of the .csv's are merged together. 
+
+```{r}
+allcsv<-merge(twocsv,ssufian, all=TRUE)
+str(allcsv)
+```
+
+
+Remove columns to make it easier to run. 
+
+```{r}
+allcsv2 <-allcsv[c(1,2,5)]
+```
+
+
+## Prepare the csv for text analysis.
+
+
+This step creates character vectors using corpus 
+
+```{r}
+descriptionofjobs = Corpus(VectorSource(allcsv2$Job_Description)) 
+
+descriptionofjobs = tm_map(descriptionofjobs, content_transformer(tolower))##changes to lower letters
+
+descriptionofjobs= tm_map(descriptionofjobs, content_transformer(gsub), pattern="\\W",replace=" ")
+
+removeURL = function(x) gsub("http^\\s\\s*", "", x)%>%
+descriptionofjobs = tm_map(descriptionofjobs, content_transformer(removeURL))
+
+descriptionofjobs=tm_map(descriptionofjobs,removeNumbers) ##Remove numbers
+
+descriptionofjobs=tm_map(descriptionofjobs,removePunctuation)##Punctuation
+```
+
+```{r}
+descriptionofjobs = tm_map(descriptionofjobs, removeWords, stopwords(kind = "english"))##Stopwords
+```
+
+```{r}
+extraStopwords = c(setdiff(stopwords('english'), c("used", "will")), "time", "can", "sex", "role", "new","can", "job", "etc", "one", "looking", "well","use","best","also", "high", "real", "please", "key", "able", "must", "like", "full", "include", "good", "non", "need","plus","day","year", "com", "want", "age","using","sexual", "help","apply", "race", "orientation", "will", "work", "new")
+
+descriptionofjobs = tm_map(descriptionofjobs, removeWords, extraStopwords) ##more stop words or unwanted words
+```
+
+```{r}
+descriptionofjobs = tm_map (descriptionofjobs, stripWhitespace)
+```
+
+
+
+## Creating the Bag of Words 
+
+
+```{r}
+allwords2<-DocumentTermMatrix(descriptionofjobs)
+```
+
+
+```{r}
+sparsewords = removeSparseTerms(allwords2,.50)
+```
+
+
+## Begin the analysis
+
+
+Convert into a tidy table 
+
+```{r}
+tidywords<-tidy(sparsewords)
+tidywords
+```
+
+
+```{r}
+totalwords<-tidywords%>%
+  count(term, sort= TRUE)
+
+kable(totalwords) %>%
+  kable_styling(full_width = F) %>%
+  column_spec(1, bold = T, border_right = F) %>%
+  column_spec(1, width = "15em", background = "lightgreen")
+```
+
+
+```{r}
+tidywords %>%
+  count(term, sort = TRUE) %>%
+  filter(n > 180) %>%
+  ggplot(aes(term, n)) +
+  geom_col() +
+  xlab(NULL) +
+  coord_flip()
+```
+
+
+
+```{r}
+summaryofwords<-tidywords %>% 
+  group_by(term) %>%
+  summarize(total = sum(n()))%>%
+  arrange(desc(total))
+
+totalwords<-left_join(totalwords, summaryofwords)
+```
+
+
+Frequency of each word inspired by Zipf's Law
+```{r}
+tfrequency <-summaryofwords %>%
+  group_by(term)%>%
+  mutate(rank= n(), 'frequencyofterm' = n()/total)%>%
+  arrange(desc(total))
+
+kable(tfrequency) %>%
+  kable_styling(full_width = F) %>%
+  column_spec(1, bold = T, border_right = F) %>%
+  column_spec(1, width = "15em", background = "cyan")
+```
+
+
+Pairing of the words
+
+```{r}
+tidy_word_pairs<-tidywords%>%
+  pairwise_count(term,count, sort= TRUE)
+
+kable(tidy_word_pairs) %>%
+  kable_styling(full_width = F) %>%
+  column_spec(1, bold = T, border_right = F) %>%
+  column_spec(2, bold = T, border_right = F)%>%
+  column_spec(1, width = "10em", background = "yellow")%>%
+  column_spec(2, width = "10em", background = "cyan")
+
+```
+
+```{r}
+set.seed(1234)
+tidy_word_pairs %>%
+  filter(n >= 8) %>%
+  graph_from_data_frame() %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(edge_alpha = n, edge_width = n), edge_colour = "cyan3") +
+  geom_node_point(size = 5) +
+  geom_node_text(aes(label = name), repel = TRUE, 
+                 point.padding = unit(0.2, "lines")) +
+  theme_void()
+```
+
+Correlation of the words
+
+```{r}
+tidywords_cors <- tidywords %>% 
+  group_by(term) %>%
+  filter(n() >= 180) %>%
+  pairwise_cor(term, count, sort = TRUE, upper = FALSE)
+
+kable(tidywords_cors) %>%
+  kable_styling(full_width = F) %>%
+  column_spec(1, bold = T, border_right = F) %>%
+  column_spec(2, bold = T, border_right = F)%>%
+  column_spec(1, width = "10em", background = "cyan")%>%
+  column_spec(2, width = "10em", background = "yellow")
+ 
+```
+
+
+```{r}
+set.seed(1234)
+tidywords_cors %>%
+  filter(correlation > .3) %>%
+  graph_from_data_frame() %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(edge_alpha = correlation, edge_width = correlation), edge_colour = "lightblue2") +
+  geom_node_point(size = 5) +
+  geom_node_text(aes(label = name), repel = TRUE,
+                 point.padding = unit(0.3, "lines")) +
+  theme_void()
+```
+
+
+## WordCloud
+
+```{r}
+library(wordcloud)
+dtm = DocumentTermMatrix(descriptionofjobs)
+dtm = removeSparseTerms(dtm, 0.65)
+dataset = as.matrix(dtm)
+v = sort(colSums(dataset),decreasing=TRUE)
+myNames = names(v)
+d = data.frame(word=myNames,freq=v)
+wordcloud(d$word, colors=c(1:4),random.color=TRUE, d$freq, min.freq=100)
+```
+
+
+## Another Way to merge all of the data tables using the Reduce Function
+
+
+```{r chunk_name, results="hide"}
+csv123<-df_list<- list(ltcancel,selshahawy,ssufian)
+Reduce(function(d1,d2) merge(d1, d2, by = "Position",all.x=TRUE, all.y = FALSE),df_list)
+
+```
+
+```{r}
+summary(csv123)
+```
+All of the tables are merged as a list 
+
+
+## References
+1. Text Mining With R
+https://www.tidytextmining.com/
+
+2.Corpus
+https://www.rdocumentation.org/packages/tm/versions/0.7-6/topics/Corpus
+
+3.KableExtra
+https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_html.html#overview
+
+4.R Reduce Applys
+https://blog.zhaw.ch/datascience/r-reduce-applys-lesser-known-brother/
