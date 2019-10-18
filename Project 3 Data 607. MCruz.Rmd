@@ -40,7 +40,7 @@ Since all the comlumn names were different the column names were changed so that
 ##Read in .csv of SimplyHired
 
 ```{r}
-ltcancel<-read.csv("https://raw.githubusercontent.com/ltcancel/Project3/master/SimplyHiredJobs.csv", stringsAsFactors = FALSE)
+ltcancel<-read.csv("https://raw.githubusercontent.com/ltcancel/Project3/master/SimplyHiredJobs.csv", stringsAsFactors = FALSE, fileEncoding="latin1")
 colnames(ltcancel)<-c("Position", "Company","Location","Salary","URL","Job_Description")
 str(ltcancel)
 ```
@@ -48,7 +48,7 @@ str(ltcancel)
 ## Read in .csv of ai-job.net
 
 ```{r}
-selshahawy<-read.csv("https://raw.githubusercontent.com/salma71/MSDS_2019/master/Fall2019/aquisition_management_607/project_3/jobs_detailsInfo.csv", stringsAsFactors = FALSE) 
+selshahawy<-read.csv("https://raw.githubusercontent.com/salma71/MSDS_2019/master/Fall2019/aquisition_management_607/project_3/jobs_detailsInfo.csv", stringsAsFactors = FALSE, fileEncoding="latin1") 
 colnames(selshahawy)<-c("Position", "Company","Location","URL","Job_Description")  
 str(selshahawy)
 ```
@@ -56,7 +56,7 @@ str(selshahawy)
 ## Read in .csv of Monster 
 
 ```{r}
-ssufian<-read.csv("https://raw.githubusercontent.com/salma71/DataScience_skills/master/monsterjobs.csv", stringsAsFactors = FALSE) 
+ssufian<-read.csv("https://raw.githubusercontent.com/salma71/DataScience_skills/master/monsterjobs.csv", stringsAsFactors = FALSE, fileEncoding="latin1") 
 colnames(ssufian)<-c("Position", "Company","Location","Salary","URL","Job_Description")  
 str(ssufian)
 ```
@@ -196,7 +196,8 @@ Pairing of the words
 
 ```{r}
 tidy_word_pairs<-tidywords%>%
-  pairwise_count(term,count, sort= TRUE)
+  group_by(term) %>%
+  arrange(count)
 
 kable(tidy_word_pairs [1:20, 1:3]) %>%
   kable_styling(full_width = F) %>%
@@ -208,12 +209,12 @@ kable(tidy_word_pairs [1:20, 1:3]) %>%
 ```
 
 ```{r}
-set.seed(1234)
+#set.seed(1234)
 tidy_word_pairs %>%
-  filter(n >= 8) %>%
+  filter(count >= 8) %>%
   graph_from_data_frame() %>%
   ggraph(layout = "fr") +
-  geom_edge_link(aes(edge_alpha = n, edge_width = n), edge_colour = "cyan3") +
+  geom_edge_link(aes(edge_alpha = count, edge_width = count), edge_colour = "cyan3") +
   geom_node_point(size = 5) +
   geom_node_text(aes(label = name), repel = TRUE, 
                  point.padding = unit(0.2, "lines")) +
