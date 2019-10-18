@@ -47,13 +47,13 @@ library('sentimentr')
 
 ```{r}
 #read from Leticia
-ltcancel<-read.csv("https://raw.githubusercontent.com/ltcancel/Project3/master/SimplyHiredJobs.csv")
+ltcancel<-read.csv("https://raw.githubusercontent.com/ltcancel/Project3/master/SimplyHiredJobs.csv", stringsAsFactors = FALSE, fileEncoding="latin1")
 colnames(ltcancel)<-c("Position", "Company","Location","Salary","URL","Job_Description")
 #read from Salma
-selshahawy<-read.csv("https://raw.githubusercontent.com/salma71/MSDS_2019/master/Fall2019/aquisition_management_607/project_3/jobs_detailsInfo.csv", stringsAsFactors = FALSE) 
+selshahawy<-read.csv("https://raw.githubusercontent.com/salma71/MSDS_2019/master/Fall2019/aquisition_management_607/project_3/jobs_detailsInfo.csv", stringsAsFactors = FALSE, fileEncoding="latin1") 
 colnames(selshahawy)<-c("Position", "Company","Location","URL","Job_Description") 
 #read from Sufian
-ssufian<-read.csv("https://raw.githubusercontent.com/Luz917/data607project3_ssufian_monster_jobs/master/monsterjobs.csv", stringsAsFactors = FALSE) 
+ssufian<-read.csv("https://raw.githubusercontent.com/Luz917/data607project3_ssufian_monster_jobs/master/monsterjobs.csv", stringsAsFactors = FALSE, fileEncoding="latin1") 
 colnames(ssufian)<-c("Position", "Company","Location","Salary","URL","Job_Description")  
 ```
 
@@ -78,21 +78,22 @@ clean_allcsv <- allcsv[,-c(4,6)]
 
 ```{r}
 #tfidf <- clean_allcsv1
-tfidf <- clean_allcsv2$Job_Description 
+tfidf <- clean_allcsv
 # Control list to be used for all corpuses
 control_list <- list(removePunctuation = TRUE, stopwords = TRUE, tolower = TRUE,
                      weighting = weightTfIdf)
+colnames(tfidf)
 ```
 
 ```{r}
 # TF-IDF Based on the 3 job postings
 corpus.all <- VCorpus(VectorSource(tfidf$Job_Description))
-dtm.all <- DocumentTermMatrix(corpus.all, control = control_list)
+dtm.all <- DocumentTermMatrix(corpus.all)
 dtm.all
 ```
 
 ```{r}
-tdm.all <- TermDocumentMatrix(corpus.all, control = control_list)
+tdm.all <- TermDocumentMatrix(corpus.all)
 inspect(tdm.all)
 ```
 
@@ -133,6 +134,7 @@ ggplot(head(df_all,25), aes(reorder(words, count), count)) +  # head because I d
 
 
 ```{r}
+## here we wanted to plot word cloud to get the most used words regarding to TDF 
 word_cloud <- tm_map(corpus.all, removeWords, c("services", "data", "andor", "ability", "using", "new", "science", "scientist" , "you", "must", "will", "including", "can", stopwords('english')))
 
 ```
@@ -231,6 +233,7 @@ select(Position, Company, machinelearning, modeling, statistics, programming, qu
 ### Setup hard skills for plotting
 
 ```{r}
+
 hardskills2 <- hardskills %>% 
                select(-(1:2)) %>% 
                summarise_all(sum) %>% 
@@ -270,12 +273,12 @@ softskills <- clean_allcsv %>%
     mutate(visualization = grepl("visualization", Job_Description, ignore.case=TRUE)) %>%
     mutate(leadership = grepl("leadership", Job_Description, ignore.case=TRUE)) %>%
     mutate(presentation = grepl("presentation", Job_Description, ignore.case=TRUE)) %>%
-      mutate(passion = grepl("passion", Job_Description, ignore.case=TRUE)) %>%
-      mutate(research = grepl("research", Job_Description, ignore.case=TRUE)) %>%
-      mutate(teamwork = grepl("teamwork", Job_Description, ignore.case=TRUE)) %>%
-      mutate(integrity = grepl("integrity", Job_Description, ignore.case=TRUE)) %>%
-   mutate(passionate= grepl("passionate", Job_Description, ignore.case=TRUE)) %>%
-select(Position, Company, workingremote, communication, collaborative, creative, critical, problemsolving, 
+    mutate(passion = grepl("passion", Job_Description, ignore.case=TRUE)) %>%
+    mutate(research = grepl("research", Job_Description, ignore.case=TRUE)) %>%
+    mutate(teamwork = grepl("teamwork", Job_Description, ignore.case=TRUE)) %>%
+    mutate(integrity = grepl("integrity", Job_Description, ignore.case=TRUE)) %>%
+    mutate(passionate= grepl("passionate", Job_Description, ignore.case=TRUE)) %>%
+    select(Position, Company, workingremote, communication, collaborative, creative, critical, problemsolving, 
   activelearning, hypothesis, organized, judgement, selfstarter, interpersonalskills, detail_oriented, 
   visualization, leadership,presentation,passion,research,teamwork,integrity,passionate)
 ```
@@ -305,13 +308,13 @@ ggplot(softskills2,aes(x=reorder(variable, value), y=value)) + geom_bar(stat='id
 
 
 ```{r}
-scores1 <- sentiment_by(clean_allcsv$Job_Description, by=NULL) %>%
+scores1 <- sentiment_by(clean_allcsv2$Job_Description) %>%
   pull(ave_sentiment)
 head(scores1)
 #m_wide2 <- m_wide
 #clean_allcsv2$sentiment_scores<- scores1
 #clean_allcsv3 <- clean_allcsv2[,-c(4)] # deleting redundant column
-sentiment_score_df <- clean_allcsv2  %>% 
+sentiment_score_df <- clean_allcsv  %>% 
        select(Company, sentiment_scores)
 head(sentiment_score_df)
 ```
