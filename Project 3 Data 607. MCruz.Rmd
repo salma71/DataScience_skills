@@ -79,13 +79,6 @@ str(allcsv)
 ```
 
 
-Remove columns to make it easier to run. 
-
-```{r}
-allcsv2 <-allcsv[c(1,2,5)]
-```
-
-
 ## Prepare the csv for text analysis.
 
 
