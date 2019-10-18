@@ -16,7 +16,7 @@ After all of the Data has been scraped from the Job websites and turned into .cs
 
 #Load packages
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 require(dplyr)
 require(rvest)
 require(stringr)
@@ -39,7 +39,7 @@ Since all the comlumn names were different the column names were changed so that
 
 ##Read in .csv of SimplyHired
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 ltcancel<-read.csv("https://raw.githubusercontent.com/ltcancel/Project3/master/SimplyHiredJobs.csv", stringsAsFactors = FALSE, fileEncoding="latin1")
 colnames(ltcancel)<-c("Position", "Company","Location","Salary","URL","Job_Description")
 str(ltcancel)
@@ -47,7 +47,7 @@ str(ltcancel)
 
 ## Read in .csv of ai-job.net
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 selshahawy<-read.csv("https://raw.githubusercontent.com/salma71/MSDS_2019/master/Fall2019/aquisition_management_607/project_3/jobs_detailsInfo.csv", stringsAsFactors = FALSE, fileEncoding="latin1") 
 colnames(selshahawy)<-c("Position", "Company","Location","URL","Job_Description")  
 str(selshahawy)
@@ -55,7 +55,7 @@ str(selshahawy)
 
 ## Read in .csv of Monster 
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 ssufian<-read.csv("https://raw.githubusercontent.com/salma71/DataScience_skills/master/monsterjobs.csv", stringsAsFactors = FALSE, fileEncoding="latin1") 
 colnames(ssufian)<-c("Position", "Company","Location","Salary","URL","Job_Description")  
 str(ssufian)
@@ -66,21 +66,21 @@ str(ssufian)
 Since we only can merge two at at time, we merge the first two .csvs into one. 
 All the column names and rows are not identical so we have to set all = TRUE to make sure that they all merge no matter the number of columns or the number of rows. 
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 twocsv<-merge(ltcancel,selshahawy,all= TRUE)
 str(twocsv)
 ```
 
 Here we merge the third .csv and all of the .csv's are merged together. 
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 allcsv<-merge(twocsv,ssufian, all=TRUE)
 str(allcsv)
 ```
 
 Remove columns to make it easier to run. 
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 allcsv2 <-allcsv[c(1,2,5)]
 ```
 
@@ -90,7 +90,7 @@ allcsv2 <-allcsv[c(1,2,5)]
 
 This step creates character vectors using corpus 
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 descriptionofjobs = Corpus(VectorSource(allcsv2$Job_Description)) 
 
 descriptionofjobs = tm_map(descriptionofjobs, content_transformer(tolower))##changes to lower letters
@@ -105,17 +105,17 @@ descriptionofjobs=tm_map(descriptionofjobs,removeNumbers) ##Remove numbers
 descriptionofjobs=tm_map(descriptionofjobs,removePunctuation)##Punctuation
 ```
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 descriptionofjobs = tm_map(descriptionofjobs, removeWords, stopwords(kind = "english"))##Stopwords
 ```
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 extraStopwords = c(setdiff(stopwords('english'), c("used", "will")), "time", "can", "sex", "role", "new","can", "job", "etc", "one", "looking", "well","use","best","also", "high", "real", "please", "key", "able", "must", "like", "full", "include", "good", "non", "need","plus","day","year", "com", "want", "age","using","sexual", "help","apply", "race", "orientation", "will", "work", "new")
 
 descriptionofjobs = tm_map(descriptionofjobs, removeWords, extraStopwords) ##more stop words or unwanted words
 ```
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 descriptionofjobs = tm_map (descriptionofjobs, stripWhitespace)
 ```
 
@@ -124,12 +124,12 @@ descriptionofjobs = tm_map (descriptionofjobs, stripWhitespace)
 ## Creating the Bag of Words 
 
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 allwords2<-DocumentTermMatrix(descriptionofjobs)
 ```
 
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 sparsewords = removeSparseTerms(allwords2,.50)
 ```
 
@@ -139,13 +139,13 @@ sparsewords = removeSparseTerms(allwords2,.50)
 
 Convert into a tidy table 
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 tidywords<-tidy(sparsewords)
 tidywords
 ```
 
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 totalwords<-tidywords%>%
   count(term, sort= TRUE)
 
@@ -156,7 +156,7 @@ kable(totalwords) %>%
 ```
 
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 tidywords %>%
   count(term, sort = TRUE) %>%
   filter(n > 180) %>%
@@ -168,7 +168,7 @@ tidywords %>%
 
 
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 summaryofwords<-tidywords %>% 
   group_by(term) %>%
   summarize(total = sum(n()))%>%
@@ -179,7 +179,7 @@ totalwords<-left_join(totalwords, summaryofwords)
 
 
 Frequency of each word inspired by Zipf's Law
-```{r}
+```{r warning=FALSE, message= FALSE}
 tfrequency <-summaryofwords %>%
   group_by(term)%>%
   mutate(rank= n(), 'frequencyofterm' = n()/total)%>%
@@ -194,7 +194,7 @@ kable(tfrequency) %>%
 
 Pairing of the words
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 tidy_word_pairs<-tidywords%>%
   group_by(term) %>%
   arrange(count)
@@ -208,7 +208,7 @@ kable(tidy_word_pairs [1:20, 1:3]) %>%
 
 ```
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 #set.seed(1234)
 tidy_word_pairs %>%
   filter(count >= 8) %>%
@@ -223,7 +223,7 @@ tidy_word_pairs %>%
 
 Correlation of the words
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 tidywords_cors <- tidywords %>% 
   group_by(term) %>%
   filter(n() >= 180) %>%
@@ -239,7 +239,7 @@ kable(tidywords_cors) %>%
 ```
 
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 set.seed(1234)
 tidywords_cors %>%
   filter(correlation > .3) %>%
@@ -255,7 +255,7 @@ tidywords_cors %>%
 
 ## WordCloud
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 library(wordcloud)
 dtm = DocumentTermMatrix(descriptionofjobs)
 dtm = removeSparseTerms(dtm, 0.65)
@@ -270,13 +270,13 @@ wordcloud(d$word, colors=c(1:4),random.color=TRUE, d$freq, min.freq=100)
 ## Another Way to merge all of the data tables using the Reduce Function
 
 
-```{r chunk_name, results="hide"}
+```{r chunk_name, results="hide", warning=FALSE, message= FALSE}
 csv123<-df_list<- list(ltcancel,selshahawy,ssufian)
 Reduce(function(d1,d2) merge(d1, d2, by = "Position",all.x=TRUE, all.y = FALSE),df_list)
 
 ```
 
-```{r}
+```{r warning=FALSE, message= FALSE}
 summary(csv123)
 ```
 All of the tables are merged as a list 
