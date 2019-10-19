@@ -137,7 +137,7 @@ The team was quite ambitious in what we tried to accomplish. We were quite succe
 ### Documenation: 
 It is not unusal for documentation to be an afterthought in a project and this one was no different. In future project, we would probably appoint a record-keeper much earlier and have this person in charge of the overall documentation of the project.
 
-## Impoertant links
+## Important links
 
 + [GitHub repo](https://github.com/salma71/DataScience_skills)
 + [Salma - Ai-jobs scraping](http://www.rpubs.com/salmaeng/ds_skills_607)
