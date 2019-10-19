@@ -37,39 +37,45 @@ require(kableExtra)
 
 Since all the comlumn names were different the column names were changed so that they all can be the same when we merge the three databases different databases. 
 
-##Read in .csv of SimplyHired
+## Read in .csv of SimplyHired 
 
+From Letecia
 ```{r warning=FALSE, message= FALSE}
-ltcancel<-read.csv("https://raw.githubusercontent.com/ltcancel/Project3/master/SimplyHiredJobs.csv", stringsAsFactors = FALSE, fileEncoding="latin1")
+ltcancel<-read.csv("https://raw.githubusercontent.com/ltcancel/Project3/master/SimplyHiredJobs.csv", stringsAsFactors = FALSE)
 colnames(ltcancel)<-c("Position", "Company","Location","Salary","URL","Job_Description")
 str(ltcancel)
 ```
 
 ## Read in .csv of ai-job.net
 
+From Salma
 ```{r warning=FALSE, message= FALSE}
-selshahawy<-read.csv("https://raw.githubusercontent.com/salma71/MSDS_2019/master/Fall2019/aquisition_management_607/project_3/jobs_detailsInfo.csv", stringsAsFactors = FALSE, fileEncoding="latin1") 
+selshahawy<-read.csv("https://raw.githubusercontent.com/salma71/MSDS_2019/master/Fall2019/aquisition_management_607/project_3/jobs_detailsInfo.csv", stringsAsFactors = FALSE) 
 colnames(selshahawy)<-c("Position", "Company","Location","URL","Job_Description")  
 str(selshahawy)
 ```
 
 ## Read in .csv of Monster 
 
+From Suwarman
 ```{r warning=FALSE, message= FALSE}
-ssufian<-read.csv("https://raw.githubusercontent.com/salma71/DataScience_skills/master/monsterjobs.csv", stringsAsFactors = FALSE, fileEncoding="latin1") 
+ssufian<-read.csv("https://raw.githubusercontent.com/salma71/DataScience_skills/master/monsterjobs.csv", stringsAsFactors = FALSE) 
 colnames(ssufian)<-c("Position", "Company","Location","Salary","URL","Job_Description")  
 str(ssufian)
 ```
 
 ## Merge all the .csv's into one. 
 
-Since we only can merge two at at time, we merge the first two .csvs into one. 
+Since we only can merge two at at time, we merge the first two .csvs into one. The column names are position, Company, Location, URL, and Job Description.  
+
 All the column names and rows are not identical so we have to set all = TRUE to make sure that they all merge no matter the number of columns or the number of rows. 
 
 ```{r warning=FALSE, message= FALSE}
 twocsv<-merge(ltcancel,selshahawy,all= TRUE)
 str(twocsv)
 ```
+209 and 60 objects have been merged together to equal 269 ob listings. 
+
 
 Here we merge the third .csv and all of the .csv's are merged together. 
 
@@ -77,6 +83,8 @@ Here we merge the third .csv and all of the .csv's are merged together.
 allcsv<-merge(twocsv,ssufian, all=TRUE)
 str(allcsv)
 ```
+From 269 objects now we have 295, which gives us a total number of 295 job listings that we get to do text mining with.
+
 
 Remove columns to make it easier to run. 
 
@@ -87,21 +95,17 @@ allcsv2 <-allcsv[c(1,2,5)]
 
 ## Prepare the csv for text analysis.
 
+Using Corpus with the tm package seemed to be the best way to prepare the data for data analysis. Using the  [Corpus method information](https://www.rdocumentation.org/packages/tm/versions/0.7-6/topics/Corpus) and with the help of [this](https://towardsdatascience.com/understanding-and-writing-your-first-text-mining-script-with-r-c74a7efbe30f) it cleaned up the text and unnecessary words that we dont want to have in the analysis. After this step you move onto the step which is the bag of words. 
 
-This step creates character vectors using corpus 
+This step begins to create character vectors using corpus 
 
 ```{r warning=FALSE, message= FALSE}
 descriptionofjobs = Corpus(VectorSource(allcsv2$Job_Description)) 
-
 descriptionofjobs = tm_map(descriptionofjobs, content_transformer(tolower))##changes to lower letters
-
 descriptionofjobs= tm_map(descriptionofjobs, content_transformer(gsub), pattern="\\W",replace=" ")
-
 removeURL = function(x) gsub("http^\\s\\s*", "", x)%>%
 descriptionofjobs = tm_map(descriptionofjobs, content_transformer(removeURL))
-
 descriptionofjobs=tm_map(descriptionofjobs,removeNumbers) ##Remove numbers
-
 descriptionofjobs=tm_map(descriptionofjobs,removePunctuation)##Punctuation
 ```
 
@@ -111,7 +115,6 @@ descriptionofjobs = tm_map(descriptionofjobs, removeWords, stopwords(kind = "eng
 
 ```{r warning=FALSE, message= FALSE}
 extraStopwords = c(setdiff(stopwords('english'), c("used", "will")), "time", "can", "sex", "role", "new","can", "job", "etc", "one", "looking", "well","use","best","also", "high", "real", "please", "key", "able", "must", "like", "full", "include", "good", "non", "need","plus","day","year", "com", "want", "age","using","sexual", "help","apply", "race", "orientation", "will", "work", "new")
-
 descriptionofjobs = tm_map(descriptionofjobs, removeWords, extraStopwords) ##more stop words or unwanted words
 ```
 
@@ -123,38 +126,44 @@ descriptionofjobs = tm_map (descriptionofjobs, stripWhitespace)
 
 ## Creating the Bag of Words 
 
+This is an important step, after cleaning the text we then have to store the words into the document term matrix. With the document term matrix we are able to see how many occorances does the term have in the matrix. After we do that we then sparse the words so that we can get the words that have the most occurences in the matrix. I used a sparsity of .45.
+
 
 ```{r warning=FALSE, message= FALSE}
-allwords2<-DocumentTermMatrix(descriptionofjobs)
+allwords2<-DocumentTermMatrix(descriptionofjobs)##Creating the DocumentTermMatrix
 ```
 
 
 ```{r warning=FALSE, message= FALSE}
-sparsewords = removeSparseTerms(allwords2,.50)
+sparsewords = removeSparseTerms(allwords2,.45) ##removing the sparse terms. 
 ```
+
 
 
 ## Begin the analysis
 
 
-Convert into a tidy table 
+Now finally we can begin the analysis using the guidance of Text Mining with R of the data that was scraped from all the job boards and see what skills have the most occurences in the job boards. But before we can do that we have to make the DocumentTermMatrix into a tidy table. 
 
+
+Which is done here.
 ```{r warning=FALSE, message= FALSE}
 tidywords<-tidy(sparsewords)
 tidywords
 ```
 
 
+This shows the number of times the term appers in the text. 
 ```{r warning=FALSE, message= FALSE}
 totalwords<-tidywords%>%
   count(term, sort= TRUE)
-
 kable(totalwords) %>%
   kable_styling(full_width = F) %>%
   column_spec(1, bold = T, border_right = F) %>%
   column_spec(1, width = "15em", background = "lightgreen")
 ```
 
+As you can see data, experience, team, science, experience,	years, python, skills,	business,	learning,	degree, knowledge, machine, ability, are the words that occur the most in the text. which is a mixture of hard and soft skills.
 
 ```{r warning=FALSE, message= FALSE}
 tidywords %>%
@@ -166,69 +175,80 @@ tidywords %>%
   coord_flip()
 ```
 
+The top 3 most used terms are data, experience, and team. 
+
+
 
 
 ```{r warning=FALSE, message= FALSE}
+## This is needed in order to be able to calculate the frequency of the term. 
 summaryofwords<-tidywords %>% 
   group_by(term) %>%
   summarize(total = sum(n()))%>%
   arrange(desc(total))
-
 totalwords<-left_join(totalwords, summaryofwords)
+
 ```
 
 
-Frequency of each word inspired by Zipf's Law
+
+
+This calculates the Frequency of each term which is inspired by Zipf's Law. Zipf's law states that the frequency is inversely proportional to the rank.
 ```{r warning=FALSE, message= FALSE}
 tfrequency <-summaryofwords %>%
   group_by(term)%>%
   mutate(rank= n(), 'frequencyofterm' = n()/total)%>%
-  arrange(desc(total))
-
+  arrange(total)
 kable(tfrequency) %>%
   kable_styling(full_width = F) %>%
   column_spec(1, bold = T, border_right = F) %>%
   column_spec(1, width = "15em", background = "cyan")
 ```
 
+This shows the frequencies for the word in its descending order.
 
-Pairing of the words
 
+
+
+Groupings of the words
+
+It is interesting to see the number of times that words have been grouped together in the text per document. This shows the number of times that the word has been grouped together. 
 ```{r warning=FALSE, message= FALSE}
-tidy_word_pairs<-tidywords%>%
+group_word_pairs<-tidywords%>%
   group_by(term) %>%
   arrange(count)
-
-kable(tidy_word_pairs [1:20, 1:3]) %>%
+kable(group_word_pairs [1:20, 1:3] ) %>%
   kable_styling(full_width = F) %>%
   column_spec(1, bold = T, border_right = F) %>%
   column_spec(2, bold = T, border_right = F)%>%
-  column_spec(1, width = "10em", background = "yellow")%>%
-  column_spec(2, width = "10em", background = "cyan")
-
+  column_spec(1, width = "3em", background = "yellow")%>%
+  column_spec(2, width = "8em", background = "cyan")
 ```
 
 ```{r warning=FALSE, message= FALSE}
 #set.seed(1234)
-tidy_word_pairs %>%
-  filter(count >= 8) %>%
+group_word_pairs %>%
+  filter(count >= 10) %>%
   graph_from_data_frame() %>%
   ggraph(layout = "fr") +
   geom_edge_link(aes(edge_alpha = count, edge_width = count), edge_colour = "cyan3") +
-  geom_node_point(size = 5) +
+  geom_node_point(size = 2) +
   geom_node_text(aes(label = name), repel = TRUE, 
-                 point.padding = unit(0.2, "lines")) +
+                 point.padding = unit(0.3, "lines")) +
   theme_void()
 ```
 
+
+
+
 Correlation of the words
 
+It would even be better to see what words occur togehter and there correlation to each other. Here we get to see the correlations of the words. 
 ```{r warning=FALSE, message= FALSE}
 tidywords_cors <- tidywords %>% 
   group_by(term) %>%
   filter(n() >= 180) %>%
   pairwise_cor(term, count, sort = TRUE, upper = FALSE)
-
 kable(tidywords_cors) %>%
   kable_styling(full_width = F) %>%
   column_spec(1, bold = T, border_right = F) %>%
@@ -251,10 +271,11 @@ tidywords_cors %>%
                  point.padding = unit(0.3, "lines")) +
   theme_void()
 ```
-
+Here you can visually see the co-occurences. 
 
 ## WordCloud
 
+In ore to make the wordcloud we use the terms that we ended up with after we cleaned the terms. Within the function it changes the word to a DocumentTermMatrix and it sparses the words. Here we can the terms that have been used the most in the job boards.
 ```{r warning=FALSE, message= FALSE}
 library(wordcloud)
 dtm = DocumentTermMatrix(descriptionofjobs)
@@ -265,7 +286,11 @@ myNames = names(v)
 d = data.frame(word=myNames,freq=v)
 wordcloud(d$word, colors=c(1:4),random.color=TRUE, d$freq, min.freq=100)
 ```
+Here you can see that data, experience, business, leraning, machine, years, analytics, solutions, developement, support, scientest, science, computer. teams, skills, technology, and information are one of the many words that are in the wordcloud that stand out the most. But of course DATA is going to be one of the most important terms in a job board for data scientist. 
 
+
+## Conclusion
+Doing this project gives one an idea what Companies are looking for when it comes to Data Science. With the top three most used terms being data, experince and team, it gives one an idea of the companies want and expect from a Data Scientest. One of course they expect the applicant to know Data.They also want the person to have experience with working with data. They also want people that are able to work in a team while working with data. Some of the words that had the highest frquencies were ability, knowledge, machine, degree,	learning, business, skills, and python. With these words one can tell that Companies want someone that has the ability to work in a business enviorment, that has the knowledge and the education, and the skills needed to do machine learning and python. When you look at the correlation of the words you can see how years is in the middle and connects to point in the correlation. With that one can tell that companies care about the years of experience a person has with working in Data. So what are the top skills that companies are looking for is it soft or hard skills? with this it seems to be a mixture of everything, companies want people soft skills that are able to work in a team. They also want people with hard skills that are able to work with python, and sql. To be a data scientest you have to both have hards skills, and soft skills. 
 
 ## Another Way to merge all of the data tables using the Reduce Function
 
@@ -273,7 +298,6 @@ wordcloud(d$word, colors=c(1:4),random.color=TRUE, d$freq, min.freq=100)
 ```{r chunk_name, results="hide", warning=FALSE, message= FALSE}
 csv123<-df_list<- list(ltcancel,selshahawy,ssufian)
 Reduce(function(d1,d2) merge(d1, d2, by = "Position",all.x=TRUE, all.y = FALSE),df_list)
-
 ```
 
 ```{r warning=FALSE, message= FALSE}
@@ -283,6 +307,7 @@ All of the tables are merged as a list
 
 
 ## References
+
 1. Text Mining With R
 https://www.tidytextmining.com/
 
@@ -295,6 +320,11 @@ https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_ht
 4.R Reduce Applys
 https://blog.zhaw.ch/datascience/r-reduce-applys-lesser-known-brother/
 
+5. Understanding and writing your text analysis.
+https://towardsdatascience.com/understanding-and-writing-your-first-text-mining-script-with-r-c74a7efbe30f
+
 RPubs Link
-http://rpubs.com/Luz917/project3data607Cruz
+http://rpubs.com/Luz917/project3data607MCruz
+
+
 
