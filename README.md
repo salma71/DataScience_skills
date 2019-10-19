@@ -1,0 +1,129 @@
+
+## Introduction
+
+As aspiring Data Scientists a very common question is what skills are important in today’s market place?, Data Science has reputation for rapidly changing and so do the tools. Since we all want to be as well trained as possible at the completion of the CUNY MSDA program, we set out to answer “Which skills are the most valued data science skills?”.
+
+## Approach
+
+1. **Literature Review** we reviewed many resources to establish a general idea of valued Data Science skills
+2. **Sourcing** the best sources were singled out to be scraped for detailed information. The sources proved to yielded the greatest results - Monester.com, SimplyHire, and ai-jobs Job Board
+3. **Transforming** The collective information from the sources was messy and noisy. So, the bag of words and phrases was processed down to specific skill based words/phrases
+4. **Visualization** detailed results were converted to a meaningful, understandable, telling and aesthetically pleasing format
+
+## Research Question
+
++ What are the most valued data science skills? 
+
+## Group Members & Roles/Contribution
+
+Team Lead - Salma Elshahawy
+
+Sourcing and webpage scraping - “Sourcers” - Leticia, Salma, Sufian
+
+Data assembly and tidying - “Transformers” - Leticia, Salma, Sufian
+
+Data visualization and analysis - “Presenters” - Sufian, Maryluz.
+
+Code Review and debugging - Salma
+
+## Team communication 
+
+The communications strategy consisted of all-hands on deck team meetings on the Wednesday of each week using Zoom.
+We further communicated through emails, texts, phone calls, and the occasional small sub group meetings throughout the weeks using slack group. Data and code was shared using a combination of github and rpubs.We used [Trello](https://www.trello.com) to manage project tasks and keep track of the team progress. 
+
+![trello-dashboard](/Users/salmaelshahawy/Desktop/MSDS_2019/Fall2019/aquisition_management_607/project_3/DataScience_skills/trello-dashboard.png)
+
+
+## Data Collection  
+
+Each member of the “Sourcing” team pursued an individual source of data. We were conscious of the time constraint and we had time box our efforts to have raw data to provide downstream by the end of the following Friday. We were concerns that if we only restrict our efforts to one or two sources and encountered some difficulties in the scrapping process, we would have not enough time to change course.
+
+The general approach was to initiate a search for “data science” terms and collect the results by scrapping, identify the skills, and store the outcome. A preliminary filtering of noise and irrelevant data was done. The result set with agreed upon fields was then provided to the group in charge of transforming the data in a .csv format containing the following attributes: position_title, Location, details_URL, and full_description.
+
+First, we went to our assigned website and searched Data Scientist positions. The main URL on the first page of the search results was used as our base URL in our R code. 
+
+We found the html_nodes for each piece of data needed to pull and added this to the R code. The html_nodes allowed R to locate the job title, company, location, and job description for each job listed.
+A For loop was used for a set number of web pages using the URL from step 1 and the html_nodes in step 2. The data found in each loop was then dumped into a data frame.
+A csv file was created for each website and all files were uploaded to GitHub. 
+
+the team was agreed to 
+
+### Scraping ai-jobs.com
+
+**Done by Salma**, the [Rpubs link](http://www.rpubs.com/salmaeng/ds_skills_607). **Ai-jobs.net** is a job board that specifically serves the artificial intelligence (AI) and data science community. Whether you’re looking for something permanent or a contract role, there’s an option for everyone. The jobs listed on the website can also be found on their [Reddit thread](https://www.reddit.com/user/ai_jobs). 
+
+The aim here is to provide a comprehensive and clear listing of jobs related to AI, big data, DL, and ML. So the site is pretty basic, straightforward, and all the focus is on current vacancies.
+
+Unfortunately, using httr and rvest packages didn’t work for the ai-jobs, which was written primarily in JavaScript. Instead, Salma adapted Florian Teschner’s [instructions](https://www.r-bloggers.com/web-scraping-javascript-rendered-sites/) on using PhantomJS to convert the website into HTML. She wrapped this in a system() call inside R Studio, but it could just as easily be done from the command line.So, she wrote a javascript code into **R** to convert the javascript page into a pure *HTML* that can be scraped. After converting the rap board’s website from Javascript into html, she could use rvest and dplyr package functions to get the job description paths into a format that she wanted.
+
+### Scraping SimplyHired.com
+
+**Done by Leticia**, the [Rpubs link](http://rpubs.com/ltcancel/Project3_SimplyHiredData). Leticia was able to get the Base url for job description then she concat job title and how many pages she wants to scrape. She was able to scrape 10 pages and extract the full details for each job.
+
+### Scraping Monester.com
+
+**Done by Sufian**, the [Rpubs link](http://www.rpubs.com/ssufian/539224). Sufian followed Leticia approach in scraping. 
+
+## Cleaning the Data
+
+**Done by Sufian and Maryluz** the [Rpubs link - sufian](http://www.rpubs.com/ssufian/540742), [Rpubs link - Maryluz](http://rpubs.com/Luz917/project3data607Cruz) After all of the Data Scientist job data was collected and posted to GitHub, we could then write R code that pulled each CSV file in the individual GitHub repos. 
+
+Once the data from each file was collected, the column names had to be modified. Although the data in each file was the same, we needed to make sure there was uniformity in the column header labeling. 
+The job descriptions were then cleaned by removing unwanted words and characters such as punctuation marks,  beginnings of URLs (HTTP text), and stop words.
+The words remaining in each description became the main words needed for our analysis. 
+We decided to take the tf-idf approach for our word analysis. Tf-idf measures how frequently a word occurs in a document. Since we are looking for soft skills we want to measure the frequency of words such as collaborative, creative, organized, leadership, and teamwork. 
+
+
+
+## Text Analysis and Visualizations and Conclusion. 
+
++ The top 3 technical tool skills associated with data scientist today are: Python, R and SQL
++ The top 3 hard skill sets sought by hiring managers are: Modeling, Machine Learning and statistics
++ The top soft skills that companies are looking for are: Research, communication which is almost a tie followed by “passion”.
++ The 3 top tool and hard skills are very much talked about in our class and the industry whereby by employers expect their new hires to be able to utilize these tools on an everyday basis for thier work. While the tool
+knowledge is the first step, they also expect their hires to blend it with statistics. 
++ Modeling skills in implementing machine learning algorithms based on sound statistics are the foundation of a skilled, competent data scientist. The other “people” or soft skills are not surprisingly either, with researching capabilities and communication skill being at the top. We have learned that a good technical person is only as good as his/her communication ability. The ability to convey technical findings to commmon layman terms is what separates a hire from being a great scientist to simply just an average one.
+
+To conclude, 
+
+
+## What we learned
+
+This was a very interesting project for multiple reasons and it fair to say that we learned quite a bit as we strove to accomplish our goals in the time allotted. We encountered some difficulties along the way as expected; some we could resolve and some we could not and had to make quick decision and move on. Everyone was eager participate and ready to pinch in.
+
+The following are some key points that we learned along the way:
+
+### Communication:
+For most of us, this project was the first time that we worked collaboratively with each other and even though some of us reside in the NY area, all communications were done remotely (no In-person communication). The technology stack that we selected for this project yielded mixed results.
+
++ Zoom for online meeting: Good
+
++ Email for basic exchange of ideas/files: Not Good, became very unruly towards end of project
+
++ Github / Rpubs for handoff of project pieces: Good, probably could make better use of Github capability regarding forked repositories.
+
++ Phone: OK, limited use and not always had numbers. We could have done better with same technology
+
++ Slack: Good, we were able to share files and send quick memo to each other.
+
+In future projects we would definitely look to improve communication, like involving Git and version control system to debug our code - sourcetTree.
+
+### Time-Management: 
+The team was fairly successful in managing time
+
+### Limited scope and more focus approach
+The team was quite ambitious in what we tried to accomplish. We were quite successful but a more focus approach with a more time spent in planning would have been beneficial.
+
+### Documenation: 
+It is not unusal for documentation to be an afterthought in a project and this one was no different. In future project, we would probably appoint a record-keeper much earlier and have this person in charge of the overall documentation of the project.
+
+## Impoertant links
+
++ [GitHub repo](https://github.com/salma71/DataScience_skills)
++ [Salma - Ai-jobs scraping](http://www.rpubs.com/salmaeng/ds_skills_607)
++ [Leticia - SimplyHired scraping](http://rpubs.com/ltcancel/Project3_SimplyHiredData)
++ [Sufian - Monester scraping](http://rpubs.com/ssufian/539224)
++ [Maryluz - analysis](https://rpubs.com/Luz917/project)
++ [Sufian - analysis-2](http://www.rpubs.com/ssufian/540742)
++ [Standard csv file_salma](https://github.com/salma71/DataScience_skills/blob/master/jobs_detailsInfo%20copy.csv)
++ [Standard csv file_Sufian](https://github.com/salma71/DataScience_skills/blob/master/monsterjobs.csv)
