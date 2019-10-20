@@ -143,7 +143,7 @@ sparsewords = removeSparseTerms(allwords2,.45) ##removing the sparse terms.
 ## Begin the analysis
 
 
-Now finally we can begin the analysis using the guidance of Text Mining with R of the data that was scraped from all the job boards and see what skills have the most occurences in the job boards. But before we can do that we have to make the DocumentTermMatrix into a tidy table. 
+Now finally we can begin the analysis using the guidance of Text Mining with R of the data that was scraped from all the job boards and see what skills have the most occurences in the job boards without mutating the skills into the table. But before we can do that we have to make the DocumentTermMatrix into a tidy table. 
 
 
 Which is done here.
@@ -163,7 +163,7 @@ kable(totalwords) %>%
   column_spec(1, width = "15em", background = "lightgreen")
 ```
 
-As you can see data, experience, team, science, experience,	years, python, skills,	business,	learning,	degree, knowledge, machine, ability, are the words that occur the most in the text. which is a mixture of hard and soft skills.
+As you can see data, experience, team, science, experience,	years, python, skills,	business,	learning,	degree, knowledge, machine, ability, are the words that occur the most in the text. which is a mixture of hard and soft skills. From the top skills that we got you can see machine learning, python.
 
 ```{r warning=FALSE, message= FALSE}
 tidywords %>%
@@ -275,7 +275,7 @@ Here you can visually see the co-occurences.
 
 ## WordCloud
 
-In ore to make the wordcloud we use the terms that we ended up with after we cleaned the terms. Within the function it changes the word to a DocumentTermMatrix and it sparses the words. Here we can the terms that have been used the most in the job boards.
+In order to make the wordcloud we use the terms that we ended up with after we cleaned the terms. Within the function it changes the word to a DocumentTermMatrix and it sparses the words. Here we can the terms that have been used the most in the job boards.
 ```{r warning=FALSE, message= FALSE}
 library(wordcloud)
 dtm = DocumentTermMatrix(descriptionofjobs)
@@ -286,11 +286,12 @@ myNames = names(v)
 d = data.frame(word=myNames,freq=v)
 wordcloud(d$word, colors=c(1:4),random.color=TRUE, d$freq, min.freq=100)
 ```
-Here you can see that data, experience, business, leraning, machine, years, analytics, solutions, developement, support, scientest, science, computer. teams, skills, technology, and information are one of the many words that are in the wordcloud that stand out the most. But of course DATA is going to be one of the most important terms in a job board for data scientist. 
+Here you can see that data, experience, business, leraning, machine, years, analytics, solutions, developement, support, scientest, science, computer. teams, skills, technology, and information are one of the many words that are in the wordcloud that stand out the most. But of course DATA is going to be one of the most important terms in a job board for data scientist. In the wordcloud you can see all of the top skills that we found in the other analysis - Research, Machine Learning, Statistics, and Communication, but not all the top skills are seen. 
+
 
 
 ## Conclusion
-Doing this project gives one an idea what Companies are looking for when it comes to Data Science. With the top three most used terms being data, experince and team, it gives one an idea of the companies want and expect from a Data Scientest. One of course they expect the applicant to know Data.They also want the person to have experience with working with data. They also want people that are able to work in a team while working with data. Some of the words that had the highest frquencies were ability, knowledge, machine, degree,	learning, business, skills, and python. With these words one can tell that Companies want someone that has the ability to work in a business enviorment, that has the knowledge and the education, and the skills needed to do machine learning and python. When you look at the correlation of the words you can see how years is in the middle and connects to point in the correlation. With that one can tell that companies care about the years of experience a person has with working in Data. So what are the top skills that companies are looking for is it soft or hard skills? with this it seems to be a mixture of everything, companies want people soft skills that are able to work in a team. They also want people with hard skills that are able to work with python, and sql. To be a data scientest you have to both have hards skills, and soft skills. 
+Doing this project gives one an idea what Companies are looking for when it comes to Data Sciencetist. With the top three most used terms being data, experince and team, it gives one an idea of the companies want and expect from a Data Scientest. One of course they expect the applicant to know Data.They also want the person to have experience with working with data. They also want people that are able to work in a team while working with data. Some of the words that had the highest frquencies were ability, knowledge, machine, degree,	learning, business, skills, and python. With these words one can tell that Companies want someone that has the ability to work in a business enviorment, that has the knowledge and the education, and the skills needed to do machine learning and python. When you look at the correlation of the words you can see how years is in the middle and connects to point in the correlation. With that one can tell that companies care about the years of experience a person has with working in Data. So what are the top skills that companies are looking for is it soft or hard skills? with this it seems to be a mixture of everything, companies want people soft skills that are able to work in a team. They also want people with hard skills that are able to work with python, and sql. To be a data scientest you have to both have hards skills, and soft skills. 
 
 ## Another Way to merge all of the data tables using the Reduce Function
 
@@ -324,7 +325,7 @@ https://blog.zhaw.ch/datascience/r-reduce-applys-lesser-known-brother/
 https://towardsdatascience.com/understanding-and-writing-your-first-text-mining-script-with-r-c74a7efbe30f
 
 RPubs Link
-http://rpubs.com/Luz917/project3data607MCruz
+http://rpubs.com/Luz917/project3data607Cruz
 
 
 
