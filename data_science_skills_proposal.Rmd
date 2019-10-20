@@ -82,7 +82,11 @@ Unfortunately, using httr and rvest packages didn’t work for the ai-jobs, whic
 
 ### Scraping Monester.com
 
-**Done by Sufian**, the [Rpubs link](http://www.rpubs.com/ssufian/539224). Sufian followed Leticia approach in scraping. 
+**Done by Sufian**, the [Rpubs link](http://www.rpubs.com/ssufian/539224). Sufian followed the 3-step process provided in the lecture links of week 8:
++ Download Monster.com’s HTML and turn XML with read_html() 
++ Extract specific nodes with html_nodes() like job title, company names and job locations
++ Extract Content from nodes with html_text() and html_attrs() especially to obtain the job descriptions. He had assistance from his teammates Salma and Leticia in the scrapping process. This is a prime example of good team work whereby teammates were helping each other out to make tight deadlines.
+
 
 ## Cleaning the Data
 
@@ -97,14 +101,20 @@ We decided to take the tf-idf approach for our word analysis. Tf-idf measures ho
 
 ## Text Analysis and Visualizations and Conclusion. 
 
-+ The top 3 technical tool skills associated with data scientist today are: Python, R and SQL
-+ The top 3 hard skill sets sought by hiring managers are: Modeling, Machine Learning and statistics
-+ The top soft skills that companies are looking for are: Research, communication which is almost a tie followed by “passion”.
-+ The 3 top tool and hard skills are very much talked about in our class and the industry whereby by employers expect their new hires to be able to utilize these tools on an everyday basis for thier work. While the tool
-knowledge is the first step, they also expect their hires to blend it with statistics. 
-+ Modeling skills in implementing machine learning algorithms based on sound statistics are the foundation of a skilled, competent data scientist. The other “people” or soft skills are not surprisingly either, with researching capabilities and communication skill being at the top. We have learned that a good technical person is only as good as his/her communication ability. The ability to convey technical findings to commmon layman terms is what separates a hire from being a great scientist to simply just an average one.
++  The top 3 technical tool skills associated with data scientist today are:  Python, R, and SQL
++  The top 3 hard skill sets sought by hiring managers are:  Modeling, Machine Learning, and statistics
++  The top soft skills that companies are looking for are Research, communication which is almost a tie followed by "passion".  
 
-To conclude, 
+The 3 top tools and hard skills are very much talked about in our class and the industry whereby employers expect their new hires to know already.  The tool and hard skill sets are almost pre-requisites with soft skills just as critical and important in an ever-increasing cross-functional work environment that we work in today.  
+In general, hiring companies want or expect their new hires to have the 3 following important skills:
+
+(1) The What: To utilize these tools (Python, R, and SQL) on an everyday basis for their work.  
+
+(2) The How: While the tool knowledge is the first step, they also expect their hires to be able to perform statistical modeling.  In addition, modeling machine learning algorithms based on sound statistics form the foundations of a skilled, competent data scientist.  
+
+(3) The Need:  The last but not least is "people" or soft skills. That is the ability for doing sound research and communicating their findings to their peers and other business groups.  This is key to a really successful career in data scientists.
+
+We have learned that a good technical person is only as good as his/her communication ability. The ability to convey technical findings in common layman terms is what separates a hire from being a great scientist to simply just an average one.
 
 
 ## What we learned
